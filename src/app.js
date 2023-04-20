@@ -1,51 +1,29 @@
 const express = require('express');
 const ytdl = require('ytdl-core');
-const ffmpeg = require('fluent-ffmpeg');
+const cors = require('cors');
 
 const app = express();
 
-// API endpoint
-app.get('/convert', (req, res) => {
-  const id = req.query.id;
+app.use(cors());
 
-  // Va lidate video ID
-  if (!ytdl.validateID(id)) {
-    res.status(400).send('Invalid YouTube video ID');
-    return;
+app.get('/download', async (req, res, next) => {
+  try {
+    const id = req.query.id; // query parametresi olarak id alıyoruz
+    const videoUrl = `https://youtu.be/${id}`; // youtube url'ini oluşturuyoruz
+    const videoInfo = await ytdl.getInfo(videoUrl);
+    const audioFormat = ytdl.chooseFormat(videoInfo.formats, { quality: 'highestaudio' });
+    
+    res.header('Content-Type', 'audio/mpeg');
+    res.header('Content-Disposition', `attachment; filename="${videoInfo.title}.mp3"`);
+
+    ytdl(videoUrl, {
+      quality: audioFormat.itag
+    }).pipe(res);
+  } catch (err) {
+    next(err);
   }
-
-  // Fetch video info
-  ytdl.getInfo(id, (err, info) => {
-    if (err) {
-      res.status(500).send('Error fetching video info');
-      return;
-    }
-
-    // Extract audio stream
-    const audioStream = ytdl.downloadFromInfo(info, {
-      filter: 'audioonly',
-      quality: 'highestaudio'
-    });
-
-    // Convert audio stream to mp3 using ffmpeg
-    const ffmpegCommand = ffmpeg(audioStream)
-      .format('mp3')
-      .on('error', (err) => {
-        console.error(err);
-        res.status(500).send('Error converting audio stream');
-      })
-      .on('end', () => {
-        console.log('Audio conversion finished');
-      });
-
-    // Stream mp3 to response
-    res.setHeader('Content-Type', 'audio/mpeg');
-    ffmpegCommand.pipe(res);
-  });
 });
 
-// Start server
-let port = process.env.PORT || 3000;
-app.listen(port, () => {
-  console.log(`Server listening on port ${port}`);
+app.listen(3000, () => {
+  console.log('Server is running on port 3000');
 });
