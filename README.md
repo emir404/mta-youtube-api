@@ -19,7 +19,7 @@ server is now started, default port is 3000
 
 # Example
 
-localhost:3000/download?id=<YOUTUBE_VIDEO_ID>
+localhost:3000/download/<YOUTUBE_VIDEO_ID>
 
 # Contributors
 
