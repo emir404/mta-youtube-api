@@ -1,5 +1,5 @@
 const express = require('express');
-const {ytdl, getInfo, chooseFormat} = require('ytdl-core-discord');
+const ytdl = require('ytdl-core');
 
 const app = express();
 
@@ -7,16 +7,15 @@ app.get('/download/:id', async (req, res, next) => {
   try {
     const id = req.params.id;
     const videoUrl = `https://youtu.be/${id}`;
-    const videoInfo = await getInfo(videoUrl);
-    const audioFormat = chooseFormat(videoInfo.formats, { filter: 'audioonly' });
+    const videoInfo = await ytdl.getInfo(videoUrl);
+    const audioFormat = ytdl.filterFormats(videoInfo.formats, 'audioonly')[0];
+    
     res.header('Content-Type', 'audio/mpeg');
     res.header('Content-Disposition', `attachment; filename="${videoInfo.videoDetails.title}.mp3"`);
 
-    const stream = ytdl(videoUrl, { filter: 'audioonly', format: audioFormat });
-    stream.on('data', (chunk) => {
-      res.write(chunk);
-    });
-    stream.on('end', () => {
+    ytdl(videoUrl, { format: audioFormat }).pipe(res);
+
+    res.on('finish', () => {
       res.end();
     });
   } catch (err) {
