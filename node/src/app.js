@@ -1,26 +1,24 @@
 const express = require('express');
-const ytdl = require('ytdl-core-discord');
-const cors = require('cors');
+const {ytdl, getInfo, chooseFormat} = require('ytdl-core-discord');
 
 const app = express();
 
-app.use(cors());
-
 app.get('/download/:id', async (req, res, next) => {
   try {
-    const id = req.params.id; // getting the id as parameter
-    const videoUrl = `https://youtu.be/${id}`; // creating the YouTube URL
-    const videoInfo = await ytdl.getInfo(videoUrl); // getting the video information
-    const audioFormat = ytdl.filterFormats(videoInfo.formats, { quality: 'highestaudio' })[0]; // getting the audio format
-
-    // setting the headers
+    const id = req.params.id;
+    const videoUrl = `https://youtu.be/${id}`;
+    const videoInfo = await getInfo(videoUrl);
+    const audioFormat = chooseFormat(videoInfo.formats, { filter: 'audioonly' });
     res.header('Content-Type', 'audio/mpeg');
-    res.header('Content-Disposition', `attachment; filename="${videoInfo.title}.mp3"`);
+    res.header('Content-Disposition', `attachment; filename="${videoInfo.videoDetails.title}.mp3"`);
 
-    // streaming the audio
-    ytdl(videoUrl, {
-      quality: audioFormat.itag,
-    }).pipe(res);
+    const stream = ytdl(videoUrl, { filter: 'audioonly', format: audioFormat });
+    stream.on('data', (chunk) => {
+      res.write(chunk);
+    });
+    stream.on('end', () => {
+      res.end();
+    });
   } catch (err) {
     next(err);
   }
