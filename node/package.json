@@ -1,16 +1,17 @@
 {
-    "name": "neor-api",
+    "name": "mta-yt-api",
     "version": "1.0.0",
     "description": "a simple api to translate youtube videos to mp3",
     "main": "app.js",
     "scripts": {
-        "start": "nodemon ./src/app.js"
+        "dev": "nodemon ./src/app.js",
+        "start": "node ./src/app.js"
     },
     "dependencies": {
         "cors": "^2.8.5",
         "express": "^4.18.2",
         "nodemon": "^2.0.22",
-        "ytdl-core": "^4.11.4"
+        "ytdl-core-discord": "^1.3.1"
     },
     "nodemonConfig": {
         "ignore": [
